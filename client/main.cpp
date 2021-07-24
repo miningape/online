@@ -1,8 +1,8 @@
 #include <asio.hpp>
 #include <string>
+#include <memory>
 
 #include "../helper.hpp"
-
 
 class client {
     public:
@@ -11,7 +11,7 @@ class client {
         std::error_code ec;
         
 
-        socket.connect( endpoint );
+        socket.connect(endpoint, ec);
         
 
         if ( !ec ) {
@@ -27,11 +27,11 @@ class client {
 
     private:
     void prime_read() {
-        socket.async_read_some( asio::buffer( data.data(), 4 ),
+        asio::async_read( socket, asio::buffer( data, 4 ),
         [this]( std::error_code ec, std::size_t length ){
             log("Reading");
             if ( !ec ) {
-                log("Recived:" + std::to_string(length) + " : " + std::to_string(std::stoi(data)) );
+                log("Recived:" + std::to_string(length) + " : " + std::to_string( atoi(data) ) );
                 prime_read();
             } else {
                 logError( ec.message() );
@@ -43,7 +43,7 @@ class client {
     asio::io_context& io_context;
     asio::ip::tcp::socket socket;
     
-    std::string data;
+    char* data;
 };
 
 int main() {
@@ -55,14 +55,14 @@ int main() {
     asio::ip::tcp::endpoint endpoint( asio::ip::make_address_v4("127.0.0.1", ec), 80);
 
     if (!ec) {
-        asio::ip::tcp::socket socket( io_context );
+        //asio::ip::tcp::socket socket( io_context );
 
         client user(io_context, endpoint);
 
         std::thread thread([&io_context](){ io_context.run(); });
 
         
-        std::string input = "null";
+        std::string input = "notnull";
 
         std::cin >> input;
 

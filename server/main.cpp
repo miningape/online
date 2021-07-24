@@ -8,6 +8,7 @@ class connection : public std::enable_shared_from_this<connection> {
     public:
     connection( asio::ip::tcp::socket sock ) 
     : socket( std::move(sock) )  {
+        
         data = std::to_string(69);
     }
 

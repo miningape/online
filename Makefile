@@ -1,5 +1,6 @@
 CC = g++
-LIBS = -L /usr/include -lpthread
+LIBS_LINUX = -L /usr/include -lpthread
+LIBS = -Iinclude/ -lpthread -std=c++14
 
 CLIENT_F = client/main.cpp
 SERVER_F = server/main.cpp
@@ -11,16 +12,16 @@ bruns: server runs
 brunc: client runc
 
 runs:
-	sudo ./bin/server.app
+	sudo ./bin/server
 
 runc:
-	./bin/client.app
+	./bin/client
 
 client: ${CLIENT_F}
-	${CC} ${CLIENT_F} -o bin/$@.app ${LIBS}
+	${CC} ${CLIENT_F} -o bin/$@ ${LIBS}
 
 server: ${SERVER_F}
-	${CC} ${SERVER_F} -o bin/$@.app ${LIBS}
+	${CC} ${SERVER_F} -o bin/$@ ${LIBS}
 
 test: test.cpp
 	${CC} test.cpp -o test.o

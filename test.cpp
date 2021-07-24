@@ -1,11 +1,16 @@
 #include <iostream>
+#include <vector>
 #include <string>
 
-int main( ) {
-    int x = 69;
-    std::string s = atoi(x);
+using namespace std;
 
-    std::cout << x << " : " << s << std::endl;
+int main()
+{
+    vector<string> msg {"Hello", "C++", "World", "from", "VS Code", "and the C++ extension!"};
 
-    return 0;
+    for (const string& word : msg)
+    {
+        cout << word << " ";
+    }
+    cout << endl;
 }
