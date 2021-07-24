@@ -27,7 +27,7 @@ class client {
 
     private:
     void prime_read() {
-        asio::async_read( socket, asio::buffer( data, 2 ),
+        asio::async_read( socket, asio::buffer( data, 4 ),
         [this]( std::error_code ec, std::size_t length ){
             log("Reading");
             if ( !ec ) {
@@ -35,6 +35,8 @@ class client {
                 prime_read();
             } else {
                 logError( ec.message() );
+
+
                 //close();
             }
         } );
@@ -43,7 +45,7 @@ class client {
     asio::io_context& io_context;
     asio::ip::tcp::socket socket;
     
-    char data[10];
+    char data[4];
 };
 
 int main() {
