@@ -8,13 +8,13 @@ class connection : public std::enable_shared_from_this<connection> {
     public:
     connection( asio::ip::tcp::socket sock ) 
     : socket( std::move(sock) )  {
-        
-        data = std::to_string(69);
+
+        data = {'6', '9'};
     }
 
     void send( ) {
         auto self(shared_from_this());
-        socket.async_send( asio::buffer( data.data(), 4 ), 
+        socket.async_send( asio::buffer( data.data(), 2 ), 
         [this, self]( std::error_code ec, std::size_t length ) {
             if (!ec) log("Sent: " + data );
             else logError( ec.message() );

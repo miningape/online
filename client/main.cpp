@@ -27,7 +27,7 @@ class client {
 
     private:
     void prime_read() {
-        asio::async_read( socket, asio::buffer( data, 4 ),
+        asio::async_read( socket, asio::buffer( data, 2 ),
         [this]( std::error_code ec, std::size_t length ){
             log("Reading");
             if ( !ec ) {
@@ -43,7 +43,7 @@ class client {
     asio::io_context& io_context;
     asio::ip::tcp::socket socket;
     
-    char* data;
+    char data[10];
 };
 
 int main() {
@@ -51,6 +51,8 @@ int main() {
 
     // Create context
     asio::io_context io_context;
+    asio::io_service::work _work(io_context);
+
 
     asio::ip::tcp::endpoint endpoint( asio::ip::make_address_v4("127.0.0.1", ec), 80);
 
