@@ -16,12 +16,12 @@ class connection : public std::enable_shared_from_this<connection> {
         msg->insert("69");
     }
 
-    void send( server_message* message ) {
+    void send( server_message message ) {
         auto self(shared_from_this());
-        int size = message->size();
-        socket.async_send( asio::buffer( message->raw.data(),  size), 
+        int size = message.size();
+        socket.async_send( asio::buffer( message.raw.data(),  size), 
         [this, self, message]( std::error_code ec, std::size_t length ) {
-            std::string str(message->body());
+            std::string str = message.body();
 
             if (!ec) log("Sent: " + str );
 
@@ -74,10 +74,10 @@ class server {
                 
                 //server_message* me;
 
-                server_message* m1 = new server_message();
-                server_message* m2 = new server_message();
-                m1->insert("101");
-                m2->insert("sexy beans");
+                server_message m1;
+                server_message m2;
+                m1.insert("jef");
+                m2.insert("420");
 
                 x->read();
                 x->send( m1 );
