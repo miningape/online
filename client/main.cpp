@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "../helper.hpp"
+#include "../message.hpp"
 
 class client {
     public:
@@ -10,12 +11,11 @@ class client {
         : io_context( context ), socket(context) {
         std::error_code ec;
         
-
         socket.connect(endpoint, ec);
-        
+        msg = new server_message();
 
         if ( !ec ) {
-            prime_read();
+            prime_read_header();
         } else {
             logError( ec.message() );
         }
@@ -26,18 +26,30 @@ class client {
     }*/
 
     private:
-    void prime_read() {
-        asio::async_read( socket, asio::buffer( data, 4 ),
+    void prime_read_header() {
+        asio::async_read( socket, asio::buffer( msg->raw.data(), msg->header_size ),
         [this]( std::error_code ec, std::size_t length ){
-            log("Reading");
+            log("Reading Header");
             if ( !ec ) {
-                log("Recived:" + std::to_string(length) + " : " + std::to_string( atoi(data) ) );
-                prime_read();
+                log("Recived: " + std::to_string(length) + " : " + std::to_string( msg->header() ) );
+                prime_read_body(msg->header());
             } else {
                 logError( ec.message() );
+            }
+        } );
+    }
 
-
-                //close();
+    void prime_read_body( size_t size ) {
+        asio::async_read( socket, asio::buffer(msg->raw.data() + msg->header_size, size),
+        [this]( std::error_code ec, std::size_t length ){
+            log("Reading Body");
+            if ( !ec ) {
+                std::string s(data);
+                log("Recived: " + std::to_string(length) + " : "  + msg->body() );
+                //log(std::string(msg->raw.begin(), msg->raw.end()));
+                prime_read_header();
+            } else {
+                logError( ec.message() );
             }
         } );
     }
@@ -46,6 +58,8 @@ class client {
     asio::ip::tcp::socket socket;
     
     char data[4];
+
+    server_message* msg;
 };
 
 int main() {

@@ -3,6 +3,7 @@
 #include <string>
 
 #include "../helper.hpp"
+#include "../message.hpp"
 
 
 
@@ -11,14 +12,20 @@ class connection : public std::enable_shared_from_this<connection> {
     connection( asio::ip::tcp::socket sock ) 
     : socket( std::move(sock) )  {
         data = "69";
+        msg = new server_message();
+        msg->insert("69");
     }
 
-    void send( ) {
+    void send( server_message* message ) {
         auto self(shared_from_this());
-        socket.async_send( asio::buffer( data, 4 ), 
-        [this, self]( std::error_code ec, std::size_t length ) {
-            std::string str(data);
+        int size = message->size();
+        socket.async_send( asio::buffer( message->raw.data(),  size), 
+        [this, self, message]( std::error_code ec, std::size_t length ) {
+            std::string str(message->body());
+
             if (!ec) log("Sent: " + str );
+
+        
             else logError( ec.message() );
             //send();
             //read();
@@ -47,6 +54,7 @@ class connection : public std::enable_shared_from_this<connection> {
     char* data;
     char* user;
 
+    server_message* msg;
 };
 
 class server {
@@ -64,9 +72,16 @@ class server {
                 
                 std::shared_ptr<connection> x = std::make_shared<connection>( std::move( socket ) );
                 
+                //server_message* me;
+
+                server_message* m1 = new server_message();
+                server_message* m2 = new server_message();
+                m1->insert("101");
+                m2->insert("sexy beans");
+
                 x->read();
-                x->send();
-                x->send();
+                x->send( m1 );
+                x->send( m2 );
             } else {
                 log("Failed Connection: " + ec.message());
             }
