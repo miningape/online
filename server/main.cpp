@@ -10,18 +10,13 @@
 class connection : public std::enable_shared_from_this<connection> {
     public:
     connection( asio::ip::tcp::socket sock ) 
-    : socket( std::move(sock) )  {
-        data = "69";
-        msg = new server_message();
-        msg->insert("69");
-    }
+    : socket( std::move(sock) )  {}
 
     void send( server_message message ) {
         auto self(shared_from_this());
-        int size = message.size();
-        socket.async_send( asio::buffer( message.raw.data(),  size), 
+        socket.async_send( message.rawBuffer(), 
         [this, self, message]( std::error_code ec, std::size_t length ) {
-            std::string str = message.body();
+            std::string str = message.value();
 
             if (!ec) log("Sent: " + str );
 
@@ -51,10 +46,7 @@ class connection : public std::enable_shared_from_this<connection> {
     private:
     asio::ip::tcp::socket socket;
 
-    char* data;
-    char* user;
-
-    server_message* msg;
+    char user[4];
 };
 
 class server {
@@ -74,10 +66,11 @@ class server {
                 
                 //server_message* me;
 
-                server_message m1;
-                server_message m2;
-                m1.insert("jef");
-                m2.insert("420");
+                server_message m1("Jefla");
+                server_message m2("420");
+
+                m2.clear();
+                m2.append("{\"jeff\":\"420\"}");
 
                 x->read();
                 x->send( m1 );

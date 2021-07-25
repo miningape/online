@@ -27,25 +27,31 @@ class client {
 
     private:
     void prime_read_header() {
-        asio::async_read( socket, asio::buffer( msg.raw.data(), msg.header_size ),
+        msg = server_message();
+
+        asio::async_read( socket, msg.headBuffer(),
         [this]( std::error_code ec, std::size_t length ){
             log("Reading Header");
+
             if ( !ec ) {
-                log("Recived: " + std::to_string(length) + " : " + std::to_string( msg.header() ) );
-                prime_read_body(msg.header());
+                // Must be run if you want values before entire object is run
+                msg.update_head();
+
+                log("Recived: " + std::to_string(length) + " : " + std::to_string( msg.body_size ) );
+                prime_read_body();
             } else {
                 logError( ec.message() );
             }
         } );
     }
 
-    void prime_read_body( size_t size ) {
-        asio::async_read( socket, asio::buffer(msg.raw.data() + msg.header_size, size),
+    void prime_read_body( ) {
+        asio::async_read( socket, msg.bodyBuffer(),
         [this]( std::error_code ec, std::size_t length ){
             log("Reading Body");
             if ( !ec ) {
-                std::string s(data);
-                log("Recived: " + std::to_string(length) + " : "  + msg.body() );
+                //std::string s(data);
+                log("Recived: " + std::to_string(length) + " : "  + msg.value() );
                 //log(std::string(msg->raw.begin(), msg->raw.end()));
                 prime_read_header();
             } else {
