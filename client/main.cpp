@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "../helper.hpp"
+#include "../message.hpp"
 
 class client {
     public:
@@ -10,12 +11,11 @@ class client {
         : io_context( context ), socket(context) {
         std::error_code ec;
         
-
         socket.connect(endpoint, ec);
-        
+        msg = server_message();
 
         if ( !ec ) {
-            prime_read();
+            prime_read_header();
         } else {
             logError( ec.message() );
         }
@@ -26,18 +26,36 @@ class client {
     }*/
 
     private:
-    void prime_read() {
-        asio::async_read( socket, asio::buffer( data, 4 ),
+    void prime_read_header() {
+        msg = server_message();
+
+        asio::async_read( socket, msg.headBuffer(),
         [this]( std::error_code ec, std::size_t length ){
-            log("Reading");
+            log("Reading Header");
+
             if ( !ec ) {
-                log("Recived:" + std::to_string(length) + " : " + std::to_string( atoi(data) ) );
-                prime_read();
+                // Must be run if you want values before entire object is run
+                msg.update_head();
+
+                log("Recived: " + std::to_string(length) + " : " + std::to_string( msg.body_size ) );
+                prime_read_body();
             } else {
                 logError( ec.message() );
+            }
+        } );
+    }
 
-
-                //close();
+    void prime_read_body( ) {
+        asio::async_read( socket, msg.bodyBuffer(),
+        [this]( std::error_code ec, std::size_t length ){
+            log("Reading Body");
+            if ( !ec ) {
+                //std::string s(data);
+                log("Recived: " + std::to_string(length) + " : "  + msg.value() );
+                //log(std::string(msg->raw.begin(), msg->raw.end()));
+                prime_read_header();
+            } else {
+                logError( ec.message() );
             }
         } );
     }
@@ -46,6 +64,8 @@ class client {
     asio::ip::tcp::socket socket;
     
     char data[4];
+
+    server_message msg;
 };
 
 int main() {
