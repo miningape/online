@@ -27,24 +27,42 @@ class connection : public std::enable_shared_from_this<connection> {
         } );
     }
 
-    void read() {
-        log("read");
+    void read_head() {
+        input_msg.clear();
         auto self(shared_from_this());
-        async_read( socket, asio::buffer(user, 4),
+
+        asio::async_read( socket, input_msg.headBuffer(),
         [this, self] (std::error_code ec, std::size_t length) {
             if (!ec)
           {
-              std::string str(user);
-              log( "Recieved: " + str );
-            read();
+              input_msg.update_head();
+              log( "Recieved Header: " + input_msg.body_size );
+              read_body();
           } else {
               logError( ec.message() );
           }
         } );
     }
 
+    void read_body() {
+        auto self(shared_from_this());
+
+        asio::async_read( socket, input_msg.bodyBuffer(),
+        [this, self] (std::error_code ec, std::size_t length) {
+            if (!ec)
+          {
+              log( "Recieved Body: " + input_msg.value() );
+              read_head();
+          } else {
+              logError( ec.message() );
+          }
+        });
+    }
+
     private:
     asio::ip::tcp::socket socket;
+    server_message input_msg;
+
 
     char user[4];
 };
@@ -66,13 +84,13 @@ class server {
                 
                 //server_message* me;
 
-                server_message m1("Jefla");
-                server_message m2("420");
+                server_message m1("I Love ");
+                server_message m2("My ");
 
                 m2.clear();
-                m2.append("{\"jeff\":\"420\"}");
+                m2.append("Hong Miong Mao");
 
-                x->read();
+                x->read_head();
                 x->send( m1 );
                 x->send( m2 );
             } else {
@@ -86,34 +104,6 @@ class server {
     
     asio::ip::tcp::acceptor acceptor;
 };
-
-/*
-class acceptor {
-    public:
-    acceptor( asio::io_context& context, asio::ip::tcp::endpoint& endpoint ) 
-        : acceptor_asio(context, endpoint) {
-        prime_accept();
-    }
-
-    private:
-    void prime_accept() {
-        acceptor_asio.async_accept( [this](std::error_code ec, asio::ip::tcp::socket socket) {
-            if ( !ec ) {
-                log("Accepted Connection");
-                
-                std::make_shared<server>( std::move( socket ) )->send();
-            } else {
-                log("Failed Connection: " + ec.message());
-            }
-
-            prime_accept();
-        } );
-    }
-
-    
-    asio::ip::tcp::acceptor acceptor_asio;
-    server server_;
-};*/
 
 int main() {
     log("Started");

@@ -21,6 +21,14 @@ class client {
         }
     }
 
+    void send( server_message message ) {
+        asio::async_write( socket, message.rawBuffer(),
+        [this, message](std::error_code ec, std::size_t length) {
+            if (!ec) log("Sent: " + message.value() );
+            else logError( ec.message() );
+        } );
+    }
+
     /*void close() {
         asio::post( io_context, [&]() { log("Closing Client"); socket.close(); } );
     }*/
@@ -35,6 +43,7 @@ class client {
 
             if ( !ec ) {
                 // Must be run if you want values before entire object is run
+                
                 msg.update_head();
 
                 log("Recived: " + std::to_string(length) + " : " + std::to_string( msg.body_size ) );
@@ -86,10 +95,13 @@ int main() {
         std::thread thread([&io_context](){ io_context.run(); });
 
         
-        std::string input = "notnull";
+        std::string input;
 
-        std::cin >> input;
+        std::getline(std::cin, input);
 
+        server_message message(input);
+
+        user.send( message );
 
         // Run Server
     //user.close();
