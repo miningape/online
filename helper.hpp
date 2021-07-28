@@ -1,3 +1,6 @@
+#ifndef HELPER
+#define HELPER
+
 #include <iostream>
 
 
@@ -14,3 +17,5 @@ void logVector ( std::vector<T>& vector ) {
 void logError( std::string text )  {
     std::cout << "**: " << text << " **" << std::endl;
 }
+
+#endif
