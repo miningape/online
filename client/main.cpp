@@ -77,6 +77,17 @@ class client {
     server_message msg;
 };
 
+bool done = false;
+
+void worker( ) {
+    using namespace std::literals::chrono_literals;
+
+    while (!done) {
+        std::cout << "Worker thread id=" << std::this_thread::get_id() << std::endl;
+        std::this_thread::sleep_for(1s);
+    }
+}
+
 int main() {
     std::error_code ec;
 
@@ -84,27 +95,29 @@ int main() {
     asio::io_context io_context;
     asio::io_service::work _work(io_context);
 
-
     asio::ip::tcp::endpoint endpoint( asio::ip::make_address_v4("127.0.0.1", ec), 80);
 
     if (!ec) {
         //asio::ip::tcp::socket socket( io_context );
 
-        client user(io_context, endpoint);
+        client *user = new client(io_context, endpoint);
 
-        std::thread thread([&io_context](){ io_context.run(); });
+        std::thread network([&io_context](){ io_context.run(); });
 
-        std::string input;
+        std::thread gameloop( worker );
 
-        while (std::getline(std::cin, input)) {     
+        std::string input = "";
+
+        while (input != "close") {     
+            std::getline(std::cin, input);
             server_message message(input);
-
-            user.send( message );
+            user->send( message );
         }
 
         // Run Server
     //user.close();
-    if (thread.joinable()) thread.join();
+        network.join();
+        gameloop.join();
 
 
     } else {
