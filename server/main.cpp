@@ -6,11 +6,15 @@
 #include "../message.hpp"
 
 
+class server_proto {
+    public:
+    virtual void sendall( server_message msg )=0;
+};
 
 class connection : public std::enable_shared_from_this<connection> {
     public:
-    connection( asio::ip::tcp::socket sock ) 
-    : socket( std::move(sock) )  {}
+    connection( asio::ip::tcp::socket sock, server_proto* master_ ) 
+    : socket( std::move(sock) ), master( master_ )  {}
 
     void send( server_message message ) {
         auto self(shared_from_this());
@@ -36,7 +40,7 @@ class connection : public std::enable_shared_from_this<connection> {
             if (!ec)
           {
               input_msg.update_head();
-              log( "Recieved Header: " + input_msg.body_size );
+              log( "Recieved Header: " + std::to_string(input_msg.body_size) );
               read_body();
           } else {
               logError( ec.message() );
@@ -52,7 +56,9 @@ class connection : public std::enable_shared_from_this<connection> {
             if (!ec)
           {
               log( "Recieved Body: " + input_msg.value() );
+              master->sendall( input_msg );
               read_head();
+              
           } else {
               logError( ec.message() );
           }
@@ -62,16 +68,23 @@ class connection : public std::enable_shared_from_this<connection> {
     private:
     asio::ip::tcp::socket socket;
     server_message input_msg;
+    server_proto* master;
 
 
     char user[4];
 };
 
-class server {
+class server : public server_proto {
     public:
     server( asio::io_context& context, asio::ip::tcp::endpoint& endpoint ) 
         : acceptor(context, endpoint) {
         prime_accept();
+    }
+
+    void sendall( server_message msg ) {
+        for ( std::shared_ptr<connection> c : connections ) {
+            c->send( msg );
+        }
     }
 
     private:
@@ -80,19 +93,11 @@ class server {
             if ( !ec ) {
                 log("Accepted Connection");
                 
-                std::shared_ptr<connection> x = std::make_shared<connection>( std::move( socket ) );
-                
-                //server_message* me;
-
-                server_message m1("I Love ");
-                server_message m2("My ");
-
-                m2.clear();
-                m2.append("Hong Miong Mao");
+                std::shared_ptr<connection> x = std::make_shared<connection>( std::move( socket ), this );
 
                 x->read_head();
-                x->send( m1 );
-                x->send( m2 );
+                connections.push_back(x);
+
             } else {
                 log("Failed Connection: " + ec.message());
             }
@@ -103,6 +108,7 @@ class server {
 
     
     asio::ip::tcp::acceptor acceptor;
+    std::vector<std::shared_ptr<connection>> connections;
 };
 
 int main() {

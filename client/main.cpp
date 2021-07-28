@@ -39,14 +39,14 @@ class client {
 
         asio::async_read( socket, msg.headBuffer(),
         [this]( std::error_code ec, std::size_t length ){
-            log("Reading Header");
+            //log("Reading Header");
 
             if ( !ec ) {
                 // Must be run if you want values before entire object is run
                 
-                msg.update_head();
+                //msg.update_head();
 
-                log("Recived: " + std::to_string(length) + " : " + std::to_string( msg.body_size ) );
+                //log("Recived: " + std::to_string(length) + " : " + std::to_string( msg.body_size ) );
                 prime_read_body();
             } else {
                 logError( ec.message() );
@@ -57,7 +57,7 @@ class client {
     void prime_read_body( ) {
         asio::async_read( socket, msg.bodyBuffer(),
         [this]( std::error_code ec, std::size_t length ){
-            log("Reading Body");
+            // log("Reading Body");
             if ( !ec ) {
                 //std::string s(data);
                 log("Recived: " + std::to_string(length) + " : "  + msg.value() );
@@ -94,14 +94,13 @@ int main() {
 
         std::thread thread([&io_context](){ io_context.run(); });
 
-        
         std::string input;
 
-        std::getline(std::cin, input);
+        while (std::getline(std::cin, input)) {     
+            server_message message(input);
 
-        server_message message(input);
-
-        user.send( message );
+            user.send( message );
+        }
 
         // Run Server
     //user.close();
