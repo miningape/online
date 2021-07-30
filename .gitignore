@@ -1,4 +1,10 @@
-bin/*
+# Binary output directory
+bin/
 
+# SDL install files
+lib/
+include/SDL2/
+share/ 
 
+# VSCode debug/ide settings
 .vscode/
