@@ -59,7 +59,7 @@ jeff.update_head();     // Reads the header and calculates the body size
 class server_message {
     public:
     int head_size = 4;
-    int body_size = 0;
+    mutable int body_size = 0;
 
     server_message(): raw(1024) {};
     server_message( std::string str ): raw(1024) { append(str); }
@@ -82,11 +82,13 @@ class server_message {
     }
 
     std::string value() {
-        return std::string(raw.begin() + 4, raw.end());
+        read_header();
+        return std::string(raw.begin() + 4, raw.begin() + 4 + body_size);
     }
 
     const std::string value() const {
-        return std::string(raw.begin() + 4, raw.end());
+        read_header();
+        return std::string(raw.begin() + 4, raw.begin() + 4 + body_size);
     }
 
     asio::mutable_buffers_1 bodyBuffer() {
@@ -117,6 +119,15 @@ class server_message {
         body_size = header_union.number;
     }
 
+    const void read_header() const {
+        header_union.bytes[0] = raw[0];
+        header_union.bytes[1] = raw[1];
+        header_union.bytes[2] = raw[2];
+        header_union.bytes[3] = raw[3];
+
+        body_size = header_union.number;
+    }
+
     void set_header( ) {
         header_union.number = body_size;
 
@@ -134,7 +145,7 @@ class server_message {
     union HU {
         unsigned int number;
         unsigned char bytes[4];
-    } header_union;
+    } mutable header_union;
 };
 
 #endif
