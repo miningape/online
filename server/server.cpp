@@ -5,8 +5,8 @@
 #include <memory>
 #include <string>
 
-#include "../helper.hpp"
-#include "../message.hpp"
+#include "../helpers/helper.hpp"
+#include "../helpers/message.hpp"
 
 class server_proto {
     public:
