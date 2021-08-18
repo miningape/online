@@ -4,13 +4,14 @@
 #include <asio.hpp>
 #include <json.hpp>
 #include <queue>
+#include <concurrent_queue.h>
 
 #include "../helpers/message.hpp"
 #include "../helpers/helper.hpp"
 
 class client {
     public:
-    client( asio::io_context& context, asio::ip::tcp::endpoint endpoint, std::queue<nlohmann::json> &queue_) 
+    client( asio::io_context& context, asio::ip::tcp::endpoint endpoint, moodycamel::ConcurrentQueue<nlohmann::json> &queue_) 
         : io_context( context ), socket(context), queue(queue_) {
         std::error_code ec;
         
@@ -29,6 +30,8 @@ class client {
 
         socket.shutdown(asio::ip::tcp::socket::shutdown_both, ec);
         
+        socket.close();
+
         if ( !ec ) {
             log("closed connection");
         } else {
@@ -50,7 +53,7 @@ class client {
 
     private:
     void prime_read_header() {
-        msg = server_message();
+        msg.clear();
 
         asio::async_read( socket, msg.headBuffer(),
         [this]( std::error_code ec, std::size_t length ){
@@ -79,12 +82,21 @@ class client {
             if ( !ec ) {
                 //std::string s(data);
                 log("Recived: " + std::to_string(length) + " : "  + msg.value() );
-                nlohmann::json j_msg = nlohmann::json::parse(msg.value());
-                
-                queue.push(j_msg);
+                nlohmann::json j_msg;
+                if (length > 0) {
+                try { 
+                  j_msg = nlohmann::json::parse(msg.value());
+                  
+                } catch(...) {
+                  std::cout << "wtf" << std::endl;
+                  return prime_read_header();
+                }
+                }
 
                 //log(std::string(msg->raw.begin(), msg->raw.end()));
+                queue.enqueue(j_msg);
                 prime_read_header();
+                
             } else {
                 logError( "Body: " + ec.message() );
             }
@@ -95,7 +107,7 @@ class client {
     asio::ip::tcp::socket socket;
     
     char data[4];
-    std::queue<nlohmann::json> &queue;
+    moodycamel::ConcurrentQueue<nlohmann::json> &queue;
 
     server_message msg;
 };
