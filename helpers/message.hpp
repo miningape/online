@@ -61,8 +61,8 @@ class server_message {
     int head_size = 4;
     mutable int body_size = 0;
 
-    server_message(): raw(1024) {};
-    server_message( std::string str ): raw(1024) { append(str); }
+    server_message(): raw(100) {};
+    server_message( std::string str ): raw(100) { append(str); }
 
     void append( std::string str ) {
         std::vector<char> adder(str.begin(), str.end());

@@ -1,6 +1,6 @@
 CC = g++
 LIBS_LINUX = -L /usr/include -lpthread
-LIBS = -Iinclude/ -lpthread -std=c++14
+LIBS = -Iinclude -Llib -lpthread -std=c++14
 
 CLIENT_F = client/main.cpp
 SERVER_F = server/main.cpp
@@ -18,9 +18,9 @@ runc:
 	./bin/client
 
 client: ${CLIENT_F}
-	${CC} ${CLIENT_F} -o bin/$@ ${LIBS}
+	${CC} ${CLIENT_F} -o bin/$@ ${LIBS} -lSDL2
 
-server: ${SERVER_F}
+server: ${SERVER_F} server/server.cpp
 	${CC} ${SERVER_F} -o bin/$@ ${LIBS}
 
 test: test.cpp
